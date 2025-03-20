@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@import 'flowbite';
+
+/* Asigură-te că controalele Leaflet au un z-index mai mic decât UI-ul nostru */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 400 !important;
+}
+
+/* Asigură-te că popup-urile Leaflet nu acoperă UI-ul de căutare */
+.leaflet-popup {
+  z-index: 400 !important;
+}
+
+/* Asigură-te că overlay-ul hărții nu acoperă UI-ul de căutare */
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+/* Stiluri pentru markerii de calitate a aerului */
+.air-quality-marker-container {
+  background: none !important;
+  border: none !important;
+}
+
+.air-quality-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.air-quality-sign {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 24px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.2);
+  z-index: 500;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.air-quality-pole {
+  width: 3px;
+  height: 25px;
+  background-color: #333;
+  margin-top: -1px;
+}
