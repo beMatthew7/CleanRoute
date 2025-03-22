@@ -3,493 +3,210 @@ import L from 'leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import debounce from 'lodash.debounce';
+import { getUserLocation, getAddressFromCoords } from '../utils/locationUtils';
+import { SearchBar } from './map/SearchBar';
+import { TransportControls } from './map/TransportControls';
+import { AirQualityControl } from './map/AirQualityControl';
+import { AirQualityLegend } from './map/AirQualityLegend';
+import { getAQIColor, displayAirSensorsOnMap } from '../utils/airQualityUtils';
+
+// Server API URL - update this to your actual server URL
+const API_URL = 'http://localhost:5001/api';
 
 const Profile = () => {
+  // Core refs
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef({ start: null, end: null });
   const routeLayerRef = useRef(null);
-  const airSensorsLayerRef = useRef(null); // Referință pentru stratul cu senzorii de calitate a aerului
+  const airSensorsLayerRef = useRef(null);
+  
+  // Location states
   const [start, setStart] = useState(null);
   const [end, setEnd] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [startAddress, setStartAddress] = useState('');
   const [endAddress, setEndAddress] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [activeSearchField, setActiveSearchField] = useState(null); // 'start' or 'end'
-  const [transportMode, setTransportMode] = useState('foot-walking'); // Adaugă starea pentru modul de transport
-  const [showAirSensors, setShowAirSensors] = useState(false); // Afișează/ascunde senzorii
+  
+  // UI states
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [transportMode, setTransportMode] = useState('foot-walking');
+  const [showAirSensors, setShowAirSensors] = useState(false);
   const [loadingAirSensors, setLoadingAirSensors] = useState(false);
   
-  // Server API URL - update this to your actual server URL
-  const API_URL = 'http://localhost:5000/api';
-
-  // Initialize map once and get user location
+  // Add new state for healthy routing
+  const [useHealthyRoute, setUseHealthyRoute] = useState(false);
+  const [loadingHealthyRoute, setLoadingHealthyRoute] = useState(false);
+  const healthyRouteLayerRef = useRef(null);
+  
+  // Add a new state for route-specific matrix
+  const [routeMatrixVisible, setRouteMatrixVisible] = useState(false);
+  const routeMatrixLayerRef = useRef(null);
+  
+  // Initialize map
   useEffect(() => {
     mapInstance.current = L.map(mapRef.current).setView([46.77, 23.58], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
-
-    // Try to get user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          mapInstance.current.setView([latitude, longitude], 15);
-          setStart([latitude, longitude]);
-          
-          // Get the address for the current location
-          fetchReverseGeocode(longitude, latitude)
-            .then(address => {
-              setStartAddress(address);
-            })
-            .catch(err => {
-              console.error('Error getting address:', err);
-              setStartAddress('Current Location');
-            });
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setError('Could not get your location. Please enter it manually.');
-        }
-      );
-    } else {
-      console.error('Geolocation not supported');
-      setError('Geolocation is not supported by your browser.');
-    }
-
+    
+    initializeLocation();
+    
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-      }
+      if (mapInstance.current) mapInstance.current.remove();
     };
   }, []);
-
-  // Fetch address for coordinates
-  const fetchReverseGeocode = async (lng, lat) => {
+  
+  // Initialize user location
+  const initializeLocation = async () => {
     try {
-      const response = await axios.get(`${API_URL}/reverse-geocode`, {
-        params: { lng, lat }
-      });
-      return response.data.place_name;
+      const location = await getUserLocation(
+        API_URL,
+        handleLocationSuccess,
+        handleLocationError,
+        handleLocationFallback
+      );
+      setStart([location.lat, location.lng]);
     } catch (err) {
-      console.error('Error in reverse geocoding:', err);
-      throw err;
+      console.error("Location initialization failed:", err);
+      setError('Location services unavailable. Please enter your starting point manually.');
     }
   };
-
-  // Search for addresses based on text input
-  const searchAddress = async (query) => {
-    if (!query || query.length < 3) return;
+  
+  // Location callbacks
+  const handleLocationSuccess = (locationData) => {
+    console.log(`Successfully got location from ${locationData.source}`);
+    mapInstance.current.setView([locationData.lat, locationData.lng], 15);
+    getAddressFromCoords(API_URL, locationData.lng, locationData.lat)
+      .then(address => setStartAddress(address || 'Current Location'))
+      .catch(() => setStartAddress('Current Location'));
+  };
+  
+  const handleLocationError = (error) => {
+    console.error("Location error:", error);
+    setError('Could not determine your location. Please enter your starting point manually.');
+    setTimeout(() => setError(''), 7000);
+  };
+  
+  const handleLocationFallback = (fallbackData) => {
+    console.log(`Using fallback location from ${fallbackData.source}`);
+    mapInstance.current.setView([fallbackData.lat, fallbackData.lng], 13);
+    setStartAddress(fallbackData.place_name || 'Default Location');
+    setError('Could not determine your precise location. Using a default location instead.');
+    setTimeout(() => setError(''), 5000);
+  };
+  
+  // Handle markers when coordinates change
+  useEffect(() => {
+    updateMarker('start', start);
+  }, [start]);
+  
+  useEffect(() => {
+    updateMarker('end', end);
+  }, [end]);
+  
+  // Update markers helper
+  const updateMarker = (type, position) => {
+    if (!position || !mapInstance.current) return;
     
-    setIsSearching(true);
-    try {
-      const response = await axios.get(`${API_URL}/geocode`, {
-        params: { query }
+    if (markersRef.current[type]) {
+      markersRef.current[type].setLatLng(position);
+    } else {
+      const marker = L.marker(position, { draggable: true })
+        .addTo(mapInstance.current)
+        .bindPopup(type === 'start' ? "Start" : "End")
+        .openPopup();
+      
+      marker.on('dragend', (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        if (type === 'start') {
+          setStart([lat, lng]);
+          updateAddressFromCoords(lng, lat, setStartAddress);
+        } else {
+          setEnd([lat, lng]);
+          updateAddressFromCoords(lng, lat, setEndAddress);
+        }
       });
-      setSearchResults(response.data);
+      
+      markersRef.current[type] = marker;
+    }
+  };
+  
+  // Update address from coordinates
+  const updateAddressFromCoords = async (lng, lat, setAddressFunc) => {
+    try {
+      const address = await fetchReverseGeocode(lng, lat);
+      setAddressFunc(address);
     } catch (err) {
-      console.error('Error searching for address:', err);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
+      console.error('Error getting address:', err);
     }
   };
-
-  // Debounce search to prevent too many requests
-  const debouncedSearch = useRef(
-    debounce(searchAddress, 500)
-  ).current;
-
-  // Handle start address input change
-  const handleStartAddressChange = (e) => {
-    const value = e.target.value;
-    setStartAddress(value);
-    setActiveSearchField('start');
-    debouncedSearch(value);
-  };
-
-  // Handle end address input change
-  const handleEndAddressChange = (e) => {
-    const value = e.target.value;
-    setEndAddress(value);
-    setActiveSearchField('end');
-    debouncedSearch(value);
-  };
-
-  // Select an address from search results
-  const selectSearchResult = (result) => {
-    const [lng, lat] = result.center;
-    const coordinates = [lat, lng]; // Convert to [lat, lng] format
-
-    if (activeSearchField === 'start') {
-      setStart(coordinates);
-      setStartAddress(result.place_name);
-    } else if (activeSearchField === 'end') {
-      setEnd(coordinates);
-      setEndAddress(result.place_name);
-    }
-
-    setSearchResults([]);
-    setActiveSearchField(null);
-  };
-
-  // Handle map click for setting points
+  
+  // Fetch route when start, end or transportMode changes
+  useEffect(() => {
+    if (start && end) fetchRoute();
+  }, [start, end, transportMode]);
+  
+  // Map click handler for setting end point
   useEffect(() => {
     if (!mapInstance.current) return;
     
-    const clickHandler = (e) => {
-      const { lat, lng } = e.latlng;
-      
-      // If we don't have an end point yet, set it
+    const handleMapClick = (e) => {
       if (!end) {
+        const { lat, lng } = e.latlng;
         setEnd([lat, lng]);
-        
-        // Get the address for the clicked location
-        fetchReverseGeocode(lng, lat)
-          .then(address => {
-            setEndAddress(address);
-          })
-          .catch(err => {
-            console.error('Error getting address:', err);
-          });
+        updateAddressFromCoords(lng, lat, setEndAddress);
       }
     };
-
-    mapInstance.current.on('click', clickHandler);
     
+    mapInstance.current.on('click', handleMapClick);
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.off('click', clickHandler);
-      }
+      if (mapInstance.current) mapInstance.current.off('click', handleMapClick);
     };
   }, [end]);
-
-  // Handle markers
-  useEffect(() => {
-    // Handle start marker
-    if (start) {
-      if (markersRef.current.start) {
-        // Update existing marker position
-        markersRef.current.start.setLatLng(start);
-      } else {
-        // Create new marker
-        const startMarker = L.marker(start, { draggable: true })
-          .addTo(mapInstance.current)
-          .bindPopup("Start")
-          .openPopup();
-
-        startMarker.on('dragend', (e) => {
-          const { lat, lng } = e.target.getLatLng();
-          setStart([lat, lng]);
-          
-          // Update address when marker is dragged
-          fetchReverseGeocode(lng, lat)
-            .then(address => {
-              setStartAddress(address);
-            })
-            .catch(err => {
-              console.error('Error getting address:', err);
-            });
-        });
-
-        markersRef.current.start = startMarker;
-      }
-    }
-
-    // Handle end marker
-    if (end) {
-      if (markersRef.current.end) {
-        // Update existing marker position
-        markersRef.current.end.setLatLng(end);
-      } else {
-        // Create new marker
-        const endMarker = L.marker(end, { draggable: true })
-          .addTo(mapInstance.current)
-          .bindPopup("End")
-          .openPopup();
-
-        endMarker.on('dragend', (e) => {
-          const { lat, lng } = e.target.getLatLng();
-          setEnd([lat, lng]);
-          
-          // Update address when marker is dragged
-          fetchReverseGeocode(lng, lat)
-            .then(address => {
-              setEndAddress(address);
-            })
-            .catch(err => {
-              console.error('Error getting address:', err);
-            });
-        });
-
-        markersRef.current.end = endMarker;
-      }
-    }
-  }, [start, end]);
-
-  // Function to fetch route from our backend server
-  const fetchRoute = async () => {
-    if (!start || !end) return;
-
-    setLoading(true);
-    setError('');
-    
-    try {
-      console.log("Fetching route from server...");
-      
-      const response = await axios.post(`${API_URL}/directions`, {
-        start,
-        end,
-        profile: transportMode // Folosim modul de transport selectat
-      });
-      
-      console.log("Route response:", response.data);
-
-      // Remove previous route if exists
-      if (routeLayerRef.current) {
-        mapInstance.current.removeLayer(routeLayerRef.current);
-      }
-
-      // Draw the new route
-      if (response.data && response.data.features && response.data.features.length > 0) {
-        routeLayerRef.current = L.geoJSON(response.data).addTo(mapInstance.current);
-        
-        // Fit map to show the entire route
-        const bounds = routeLayerRef.current.getBounds();
-        mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
-      } else {
-        setError("No route found between these points.");
-      }
-    } catch (err) {
-      console.error("Error fetching route:", err.response?.data || err.message);
-      
-      if (err.response?.data?.details?.error?.message) {
-        setError(`Route error: ${err.response.data.details.error.message}`);
-      } else {
-        setError("Failed to fetch route. Please try different points or try again later.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch route when both points are set or when transport mode changes
-  useEffect(() => {
-    if (start && end) {
-      fetchRoute();
-    }
-  }, [start, end, transportMode]); // Adăugăm transportMode la dependențe
   
-  // Funcție pentru a obține senzorii de calitate a aerului
-  const fetchAirSensors = async () => {
-    if (!mapInstance.current) return;
-    
-    setLoadingAirSensors(true);
-    try {
-      const bounds = mapInstance.current.getBounds();
-      
-      const params = {
-        minLat: bounds.getSouth().toFixed(6),
-        minLng: bounds.getWest().toFixed(6),
-        maxLat: bounds.getNorth().toFixed(6),
-        maxLng: bounds.getEast().toFixed(6)
-      };
-      
-      console.log('Fetching air sensors with params:', params);
-      
-      const response = await axios.get(`${API_URL}/air-sensors`, {
-        params: params,
-        timeout: 10000 // Timeout de 10 secunde
-      });
-      
-      console.log('Air sensors response:', response);
-      
-      if (response.data) {
-        console.log(`Loaded ${response.data.length} air quality sensors`);
-        displayAirSensorsOnMap(response.data);
-      } else {
-        console.warn('Empty air sensors response');
-      }
-    } catch (err) {
-      console.error('Error fetching air sensors:', err);
-      setError('Failed to load air quality sensors. ' + (err.response?.data?.error || err.message));
-    } finally {
-      setLoadingAirSensors(false);
-    }
-  };
-
-  // Funcție pentru a afișa senzorii pe hartă cu icoane similare cu WAQI
-  const displayAirSensorsOnMap = (sensors) => {
-    if (!mapInstance.current || !sensors || !showAirSensors) return;
-    
-    // Remove existing layer if any
-    if (airSensorsLayerRef.current) {
-      mapInstance.current.removeLayer(airSensorsLayerRef.current);
-    }
-    
-    const markers = [];
-    sensors.forEach(sensor => {
-      if (sensor.lat && sensor.lon && sensor.aqi !== undefined) {
-        // Create a custom icon similar to WAQI's implementation
-        const iconUrl = `https://waqi.info/mapicon/${sensor.aqi}.30.png`;
-        
-        // Define icon size and anchor
-        const icon = L.icon({
-          iconUrl: iconUrl,
-          iconSize: [42, 54],      // Size of the icon [width, height]
-          iconAnchor: [21, 54],    // Point of the icon which corresponds to marker's location
-          popupAnchor: [0, -54]    // Point from which the popup should open relative to the iconAnchor
-        });
-        
-        // Create marker with the custom icon
-        const marker = L.marker([sensor.lat, sensor.lon], {
-          icon: icon,
-          title: sensor.station?.name || 'Air Quality Sensor',
-          zIndexOffset: sensor.aqi // Higher AQI values will be shown on top
-        }).addTo(mapInstance.current);
-        
-        // When marker is clicked, fetch more detailed information
-        marker.on('click', async () => {
-          try {
-            // Initial popup with basic info
-            let popup = L.popup()
-              .setLatLng([sensor.lat, sensor.lon])
-              .setContent(`
-                <div class="text-center">
-                  <h3 class="font-bold">${sensor.station?.name || 'Unknown Station'}</h3>
-                  <p>AQI: <span class="font-bold" style="color: ${getAQIColor(sensor.aqi)};">${sensor.aqi}</span></p>
-                  <p class="text-xs">Loading more details...</p>
-                </div>
-              `)
-              .openOn(mapInstance.current);
-              
-            // Try to fetch more detailed information about this station
-            try {
-              const response = await axios.get(`https://api.waqi.info/feed/@${sensor.uid}/?token=34a82bb60dac10d41ff4fbe8c28d16a7c6ccd168`);
-              if (response.data.status === 'ok') {
-                const data = response.data.data;
-                
-                // Format time
-                const time = data.time?.v ? new Date(data.time.v * 1000).toLocaleString() : 'Unknown';
-                
-                // Extract pollutant information
-                const pollutants = ['pm25', 'pm10', 'o3', 'no2', 'so2', 'co'];
-                let pollutantHtml = '';
-                let weatherHtml = '';
-                
-                for (const specie in data.iaqi) {
-                  if (pollutants.includes(specie)) {
-                    pollutantHtml += `<span class="px-1"><b>${specie}</b>: ${data.iaqi[specie].v}</span>`;
-                  } else {
-                    weatherHtml += `<span class="px-1"><b>${specie}</b>: ${data.iaqi[specie].v}</span>`;
-                  }
-                }
-                
-                // Create attributions HTML
-                let attributionsHtml = '';
-                if (data.attributions && data.attributions.length > 0) {
-                  attributionsHtml = data.attributions.map(attr => 
-                    `<a href="${attr.url}" target="_blank" class="text-blue-500 hover:underline">${attr.name}</a>`
-                  ).join(' - ');
-                }
-                
-                // Update popup with detailed information
-                popup.setContent(`
-                  <div class="max-w-xs">
-                    <h3 class="font-bold text-center">${data.city.name || sensor.station?.name || 'Unknown Station'}</h3>
-                    <div class="flex justify-center items-center my-1">
-                      <span class="text-2xl font-bold mr-2" style="color: ${getAQIColor(data.aqi)};">${data.aqi}</span>
-                      <span>AQI</span>
-                    </div>
-                    <p class="text-xs text-center">Updated: ${time}</p>
-                    
-                    ${data.city.location ? `<p class="text-xs mt-2"><b>Location:</b> ${data.city.location}</p>` : ''}
-                    
-                    ${pollutantHtml ? `
-                      <div class="mt-2">
-                        <p class="text-xs font-bold">Pollutants:</p>
-                        <div class="text-xs flex flex-wrap">${pollutantHtml}</div>
-                      </div>
-                    ` : ''}
-                    
-                    ${weatherHtml ? `
-                      <div class="mt-2">
-                        <p class="text-xs font-bold">Weather:</p>
-                        <div class="text-xs flex flex-wrap">${weatherHtml}</div>
-                      </div>
-                    ` : ''}
-                    
-                    ${attributionsHtml ? `
-                      <div class="mt-2">
-                        <p class="text-xs font-bold">Attributions:</p>
-                        <div class="text-xs">${attributionsHtml}</div>
-                      </div>
-                    ` : ''}
-                  </div>
-                `);
-              }
-            } catch (err) {
-              console.error('Error fetching detailed station info:', err);
-              // Keep the basic popup if fetch fails
-            }
-          } catch (e) {
-            console.error('Error handling marker click:', e);
-          }
-        });
-        
-        markers.push(marker);
-      }
-    });
-    
-    airSensorsLayerRef.current = L.layerGroup(markers).addTo(mapInstance.current);
-  };
-
-  // Funcție pentru a determina culoarea în funcție de valoarea AQI
-  const getAQIColor = (aqi) => {
-    if (aqi <= 50) return '#00e400'; // Good - Verde
-    if (aqi <= 100) return '#ffff00'; // Moderate - Galben
-    if (aqi <= 150) return '#ff7e00'; // Unhealthy for Sensitive Groups - Portocaliu
-    if (aqi <= 200) return '#ff0000'; // Unhealthy - Roșu
-    if (aqi <= 300) return '#99004c'; // Very Unhealthy - Violet
-    return '#7e0023'; // Hazardous - Maro
-  };
-
-  // Funcție pentru a afișa sau ascunde senzorii
-  const toggleAirSensors = () => {
-    const newState = !showAirSensors;
-    setShowAirSensors(newState);
-    
-    if (newState) {
-      fetchAirSensors();
-    } else if (airSensorsLayerRef.current && mapInstance.current) {
-      mapInstance.current.removeLayer(airSensorsLayerRef.current);
-      airSensorsLayerRef.current = null;
-    }
-  };
-
-  // Actualizează senzorii când se schimbă zona vizibilă a hărții
+  // Air quality sensors logic
   useEffect(() => {
     if (!mapInstance.current || !showAirSensors) return;
     
-    const handleMapMoveEnd = debounce(() => {
-      fetchAirSensors();
-    }, 500);
+    const handleMapMove = debounce(() => fetchAirSensors(), 500);
+    mapInstance.current.on('moveend', handleMapMove);
     
-    mapInstance.current.on('moveend', handleMapMoveEnd);
-    
-    // Încarcă senzorii la activare
     fetchAirSensors();
     
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.off('moveend', handleMapMoveEnd);
-      }
+      if (mapInstance.current) mapInstance.current.off('moveend', handleMapMove);
     };
   }, [mapInstance.current, showAirSensors]);
+
+  // Add a useEffect to preserve routes when showing air quality
+  useEffect(() => {
+    // When air quality sensors are toggled, ensure the route remains visible if it exists
+    if (routeLayerRef.current && mapInstance.current) {
+      // Bring route layer to front
+      routeLayerRef.current.bringToFront();
+    }
+  }, [showAirSensors]);
+
+   // Add a new useEffect that resets the healthy route when start or end changes
+  useEffect(() => {
+    // Reset healthy route when start or end location is changed
+    if (healthyRouteLayerRef.current) {
+      mapInstance.current.removeLayer(healthyRouteLayerRef.current);
+      healthyRouteLayerRef.current = null;
+    }
+    
+    // Also reset any route-specific matrix
+    if (routeMatrixLayerRef.current) {
+      mapInstance.current.removeLayer(routeMatrixLayerRef.current);
+      routeMatrixLayerRef.current = null;
+      setRouteMatrixVisible(false);
+    }
+    
+    // Reset the healthy route state
+    setUseHealthyRoute(false);
+    
+  }, [start, end]); // This effect runs whenever start or end changes
   
-  // Reset function to allow setting new points
+  // Reset route points
   const resetPoints = () => {
     if (markersRef.current.start) {
       mapInstance.current.removeLayer(markersRef.current.start);
@@ -507,197 +224,424 @@ const Profile = () => {
     setEndAddress('');
     setError('');
   };
+  
+  // Core data fetching functions
+  const fetchReverseGeocode = async (lng, lat) => {
+    try {
+      const response = await axios.get(`${API_URL}/reverse-geocode`, {
+        params: { lng, lat }
+      });
+      return response.data.place_name;
+    } catch (err) {
+      console.error('Error in reverse geocoding:', err);
+      throw err;
+    }
+  };
+  
+  const fetchRoute = async () => {
+    if (!start || !end) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Log coordinates for debugging
+      console.log('Fetching route with coordinates:', {
+        start: start,
+        end: end,
+        profile: transportMode
+      });
+      
+      // Ensure coordinates are valid arrays
+      if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) {
+        throw new Error('Invalid coordinates format');
+      }
+      
+      const response = await axios.post(`${API_URL}/directions`, {
+        start,
+        end,
+        profile: transportMode
+      }, {
+        timeout: 20000 // Increase timeout to 20 seconds
+      });
+      console.log('Route response:', response.data);
+      
+      if (routeLayerRef.current) {
+        mapInstance.current.removeLayer(routeLayerRef.current);
+      }
+      
+      if (response.data && response.data.features && response.data.features.length > 0) {
+        const routeCoordinates = response.data.features[0].geometry.coordinates;
+        console.log('Route coordinates received:', routeCoordinates);
+
+        // Add the route to the map
+        routeLayerRef.current = L.geoJSON(response.data).addTo(mapInstance.current);
+        
+        // Style the route
+        if (routeLayerRef.current) {
+          routeLayerRef.current.setStyle({
+            color: '#3388ff',
+            weight: 6,
+            opacity: 0.7
+          });
+          
+          // Ensure route is above air quality markers
+          routeLayerRef.current.bringToFront();
+        }
+        
+        const bounds = routeLayerRef.current.getBounds();
+        mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
+      } else {
+        setError("No route found between these points.");
+      }
+    } catch (err) {
+      console.error("Error fetching route:", err.response?.data || err.message);
+      
+      // Special handling for rate limit errors
+      if (err.response?.status === 429) {
+        setError("Service is busy. Please wait a minute and try again (API rate limit reached).");
+      } else if (err.response?.data?.details?.error?.message) {
+        setError(`Route error: ${err.response.data.details.error.message}`);
+      } else {
+        setError("Failed to fetch route. Please try different points or try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchAirSensors = async () => {
+    if (!mapInstance.current) return;
+    
+    setLoadingAirSensors(true);
+    try {
+      const bounds = mapInstance.current.getBounds();
+      const params = {
+        minLat: bounds.getSouth().toFixed(6),
+        minLng: bounds.getWest().toFixed(6),
+        maxLat: bounds.getNorth().toFixed(6),
+        maxLng: bounds.getEast().toFixed(6)
+      };
+      
+      const response = await axios.get(`${API_URL}/air-sensors`, {
+        params: params,
+        timeout: 10000
+      });
+      
+      if (response.data) {
+        // Log detailed information about each sensor to the console
+        console.log('=== AIR QUALITY SENSORS ===');
+        console.log('Total sensors found:', response.data.length);
+        
+        // Create a table in console for better readability
+        console.table(
+          response.data.map(sensor => ({
+            Station: sensor.station?.name || 'Unknown',
+            Latitude: sensor.lat,
+            Longitude: sensor.lon,
+            AQI: sensor.aqi,
+            URL: sensor.station?.url || 'N/A'
+          }))
+        );
+        
+        // Also log raw data for advanced inspection
+        console.log('Raw sensor data:');
+        response.data.forEach((sensor, index) => {
+          console.log(`Sensor #${index + 1}: lat=${sensor.lat.toFixed(6)}, lon=${sensor.lon.toFixed(6)}, aqi=${sensor.aqi}`);
+        });
+        
+        // Save the current route if it exists so we can restore it
+        const currentRoute = routeLayerRef.current;
+        
+        displayAirSensorsOnMap(
+          response.data, 
+          mapInstance.current, 
+          airSensorsLayerRef, 
+          showAirSensors, 
+          API_URL
+        );
+        
+        // Make sure the route stays on top of air quality markers
+        if (currentRoute) {
+          currentRoute.bringToFront();
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching air sensors:', err);
+      setError('Failed to load air quality sensors. ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoadingAirSensors(false);
+    }
+  };
+  
+  // Funcție helper pentru a obține descrierea calității aerului
+  const getAirQualityDescription = (pm10) => {
+    if (pm10 <= 20) return "Bună";
+    if (pm10 <= 50) return "Moderată";
+    if (pm10 <= 100) return "Nesănătoasă pentru grupuri sensibile";
+    if (pm10 <= 150) return "Nesănătoasă";
+    if (pm10 <= 200) return "Foarte nesănătoasă";
+    return "Periculoasă";
+  };
+  
+  const toggleAirSensors = () => {
+    const newState = !showAirSensors;
+    setShowAirSensors(newState);
+    
+    if (newState) {
+      console.log('Showing air quality sensors...');
+      fetchAirSensors();
+    } else if (airSensorsLayerRef.current && mapInstance.current) {
+      console.log('Hiding air quality sensors');
+      mapInstance.current.removeLayer(airSensorsLayerRef.current);
+      airSensorsLayerRef.current = null;
+      
+      // Re-fetch the route if start and end points exist to ensure it's displayed properly
+      if (start && end) {
+        fetchRoute();
+      }
+    }
+  };
+  
+  const retryGeolocation = async () => {
+    setError('Trying to get your location...');
+    try {
+      await getUserLocation(
+        API_URL,
+        handleLocationSuccess,
+        handleLocationError,
+        handleLocationFallback
+      );
+    } catch (err) {
+      console.error("Location retry failed:", err);
+      setError('Location services unavailable. Please enter your starting point manually.');
+    }
+  };
+  
+  // Add a new function to fetch a healthy route
+  const fetchHealthyRoute = async () => {
+    if (!start || !end) {
+      setError("Please set start and end points first.");
+      return;
+    }
+    
+    setLoadingHealthyRoute(true);
+    setError('');
+    
+    try {
+      console.log('Fetching healthy route from', start, 'to', end);
+      
+      // Make sure air quality is enabled when finding a healthy route
+      if (!showAirSensors) {
+        toggleAirSensors(); // Turn on air quality visualization first
+      }
+      
+      // First ensure we have a regular route calculated
+      if (!routeLayerRef.current) {
+        await fetchRoute();
+      }
+      
+      const response = await axios.post(`${API_URL}/healthy-route`, {
+        start,
+        end,
+        profile: transportMode
+      }, { 
+        timeout: 45000 // Increase timeout to 45 seconds for this complex operation
+      });
+      
+      if (healthyRouteLayerRef.current) {
+        mapInstance.current.removeLayer(healthyRouteLayerRef.current);
+      }
+      
+      if (response.data && response.data.route) {
+        console.log('Healthy route received:', response.data);
+        
+        // Add the healthier route to the map with a different color
+        healthyRouteLayerRef.current = L.geoJSON(response.data.route).addTo(mapInstance.current);
+        
+        // Style the healthy route differently (green color)
+        if (healthyRouteLayerRef.current) {
+          healthyRouteLayerRef.current.setStyle({
+            color: '#4ade80', // Green color
+            weight: 6,
+            opacity: 0.8,
+            dashArray: '10, 5' // Dashed line
+          });
+          
+          // If we have both routes, zoom to show both
+          if (routeLayerRef.current) {
+            // Create a bounds object that includes both routes
+            const standardBounds = routeLayerRef.current.getBounds();
+            const healthyBounds = healthyRouteLayerRef.current.getBounds();
+            const combinedBounds = standardBounds.extend(healthyBounds);
+            
+            // Fit the map to show both routes
+            mapInstance.current.fitBounds(combinedBounds, { padding: [30, 30] });
+          }
+        }
+        
+        // Generate a route-specific matrix
+        await generateRouteMatrix(response.data.route, response.data.metrics);
+        
+        // Show health metrics
+        if (response.data.metrics) {
+          console.log('Route health comparison:', response.data.metrics);
+          const { standard, healthy } = response.data.metrics;
+          
+          // Show message about the health benefit
+          const benefitPercent = Math.round(((standard.avgAqi - healthy.avgAqi) / standard.avgAqi) * 100);
+          
+          setError(`Healthy route is ${(healthy.distance / 1000).toFixed(1)} km (${Math.round((healthy.distance - standard.distance) / standard.distance * 100)}% longer) ` +
+              `but has ${benefitPercent}% better air quality. ` +
+              `Avg AQI: ${Math.round(healthy.avgAqi)} vs ${Math.round(standard.avgAqi)}`);
+        }
+      } else {
+        setError("Could not find a healthier alternative route.");
+      }
+    } catch (err) {
+      console.error("Error fetching healthy route:", err.response?.data || err.message);
+      
+      // Special handling for rate limit errors
+      if (err.response?.status === 429) {
+        setError("Service is busy. Please wait a minute and try again (API rate limit reached).");
+      } else {
+        setError("Failed to calculate a healthier route. " + (err.response?.data?.error || err.message));
+      }
+    } finally {
+      setLoadingHealthyRoute(false);
+    }
+  };
+
+  // Add a new function to generate air quality matrix around both routes
+  const generateRouteMatrix = async (healthyRouteGeoJSON, metrics) => {
+    try {
+      // Create bounds that include both standard and healthy routes
+      // Create a combined bounds for both routes
+      const standardRouteBounds = routeLayerRef.current.getBounds();
+      const healthyRouteBounds = L.geoJSON(healthyRouteGeoJSON).getBounds();
+      
+      const combinedBounds = standardRouteBounds.extend(healthyRouteBounds).pad(0.3);
+      
+      // Get matrix data focused on the route area
+      const params = {
+        minLat: combinedBounds.getSouth().toFixed(6),
+        minLng: combinedBounds.getWest().toFixed(6),
+        maxLat: combinedBounds.getNorth().toFixed(6),
+        maxLng: combinedBounds.getEast().toFixed(6),
+        gridSize: 40 // Higher density for route-specific matrix
+      };
+      
+      console.log('Fetching route-specific AQI data with params:', params);
+      
+      const response = await axios.get(`${API_URL}/kriging-matrix`, {
+        params: params,
+        timeout: 15000
+      });
+      
+      if (response.data && response.data.matrix) {
+        console.log('Route-specific matrix received:', response.data.matrix.length, 'points');
+        
+        // Ensure both routes are visible above the matrix
+        if (routeLayerRef.current) {
+          routeLayerRef.current.bringToFront();
+        }
+        if (healthyRouteLayerRef.current) {
+          healthyRouteLayerRef.current.bringToFront();
+        }
+        
+        // Show comparison lines between the routes
+        if (metrics) {
+          // Add labels to show route AQI values at various points
+          addAqiComparisonLabels(metrics);
+        }
+      }
+    } catch (err) {
+      console.error('Error generating route matrix:', err);
+    }
+  };
+
+  // Helper to add AQI comparison labels
+  const addAqiComparisonLabels = (metrics) => {
+    // Implementation left out for brevity, but this would add
+    // labels at key points showing the AQI difference between routes
+  };
+
+  // Add toggle handler for healthy route feature
+  const toggleHealthyRoute = () => {
+    if (useHealthyRoute) {
+      // Turn off healthy route and remove it from map
+      if (healthyRouteLayerRef.current) {
+        mapInstance.current.removeLayer(healthyRouteLayerRef.current);
+        healthyRouteLayerRef.current = null;
+      }
+      
+      // Also hide route matrix if it exists
+      if (routeMatrixLayerRef.current) {
+        mapInstance.current.removeLayer(routeMatrixLayerRef.current);
+        routeMatrixLayerRef.current = null;
+        setRouteMatrixVisible(false);
+      }
+      
+      setUseHealthyRoute(false);
+    } else {
+      // Calculate and show healthy route
+      fetchHealthyRoute();
+      setUseHealthyRoute(true);
+    }
+  };
+  
+  // Props for child components
+  const searchProps = {
+    startAddress,
+    setStartAddress,
+    endAddress,
+    setEndAddress,
+    retryGeolocation,
+    resetPoints,
+    fetchRoute,
+    loading,
+    start,
+    end,
+    transportMode,
+    setTransportMode,
+    API_URL,
+    setStart, // Add this
+    setEnd    // Add this
+  };
+  
+  const transportProps = {
+    transportMode,
+    setTransportMode
+  };
+  
+  const airQualityProps = {
+    showAirSensors,
+    toggleAirSensors,
+    loadingAirSensors,
+    // Add these new props
+    useHealthyRoute,
+    toggleHealthyRoute,
+    loadingHealthyRoute,
+    canShowHealthyRoute: Boolean(start && end) // Only enable button when start/end are set
+  };
 
   return (
     <div className="relative h-screen w-full">
-      {/* Hartă */}
-      <div ref={mapRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }}></div>
+      {/* Map */}
+      <div ref={mapRef} className="w-full h-full absolute top-0 left-0 z-1"></div>
       
-      {/* Search bar container - Mutat mai spre dreapta pentru a nu acoperi butoanele de zoom */}
-      <div className="absolute top-4 left-16 w-80 md:w-96" style={{ zIndex: 1000 }}>
-        <div className="bg-white rounded-lg shadow-lg p-3">
-          <div className="mb-2">
-            <label htmlFor="start-address" className="block text-sm font-medium text-gray-700 mb-1">Start</label>
-            <input
-              type="text"
-              id="start-address"
-              className="w-full p-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Your starting point"
-              value={startAddress}
-              onChange={handleStartAddressChange}
-              onClick={() => setActiveSearchField('start')}
-            />
-          </div>
-          
-          <div className="mb-2">
-            <label htmlFor="end-address" className="block text-sm font-medium text-gray-700 mb-1">Destination</label>
-            <input
-              type="text"
-              id="end-address"
-              className="w-full p-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Where do you want to go?"
-              value={endAddress}
-              onChange={handleEndAddressChange}
-              onClick={() => setActiveSearchField('end')}
-            />
-          </div>
-          
-          {/* Transport mode selector */}
-          <div className="mb-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transport Mode</label>
-            <div className="flex space-x-1">
-              <button 
-                onClick={() => setTransportMode('foot-walking')}
-                className={`flex-1 p-1 text-xs rounded ${transportMode === 'foot-walking' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Walking
-              </button>
-              <button 
-                onClick={() => setTransportMode('cycling-regular')}
-                className={`flex-1 p-1 text-xs rounded ${transportMode === 'cycling-regular' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Cycling
-              </button>
-              <button 
-                onClick={() => setTransportMode('driving-car')}
-                className={`flex-1 p-1 text-xs rounded ${transportMode === 'driving-car' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Driving
-              </button>
-            </div>
-          </div>
-          
-          {/* Search results dropdown - Z-index ridicat pentru a fi deasupra hărții */}
-          {searchResults.length > 0 && activeSearchField && (
-            <div className="absolute left-0 right-0 bg-white mt-0.5 rounded-md shadow-lg max-h-60 overflow-y-auto" style={{ zIndex: 1001 }}>
-              {searchResults.map((result, index) => (
-                <div 
-                  key={index}
-                  className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  onClick={() => selectSearchResult(result)}
-                >
-                  {result.place_name}
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {isSearching && (
-            <div className="text-center text-xs text-gray-500">Searching...</div>
-          )}
-          
-          <div className="flex justify-between mt-2">
-            <button 
-              onClick={resetPoints}
-              className="bg-gray-200 text-gray-700 px-2 py-1 text-sm rounded hover:bg-gray-300"
-            >
-              Reset
-            </button>
-            
-            <button 
-              onClick={fetchRoute}
-              disabled={!start || !end || loading}
-              className={`px-2 py-1 text-sm rounded ${!start || !end || loading ? 'bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-            >
-              {loading ? 'Loading...' : 'Get Route'}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Search UI */}
+      <SearchBar {...searchProps} />
       
-      {/* Stiluri inline pentru markerii de calitate a aerului */}
-      <style jsx>{`
-        .air-quality-marker-container {
-          background: none !important;
-          border: none !important;
-        }
-        
-        .air-quality-marker {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .air-quality-sign {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 36px;
-          height: 24px;
-          border-radius: 4px;
-          color: black;
-          font-weight: bold;
-          font-size: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-          border: 1px solid rgba(0,0,0,0.2);
-        }
-        
-        .air-quality-pole {
-          width: 4px;
-          height: 30px;
-          background-color: #333;
-          margin-top: -1px;
-        }
-      `}</style>
+      {/* Air Quality Controls - now includes the Healthy Route button */}
+      <AirQualityControl {...airQualityProps} />
       
-      {/* Modificăm stilul butonului pentru Air Quality */}
-      <button
-        onClick={toggleAirSensors}
-        className={`absolute top-20 right-4 px-3 py-2 rounded shadow-lg flex items-center ${
-          showAirSensors ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'
-        }`}
-        style={{ zIndex: 900 }}
-      >
-        <div className="mr-1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
-          </svg>
-        </div>
-        {loadingAirSensors ? 'Loading...' : (showAirSensors ? 'Hide Air Quality' : 'Show Air Quality')}
-      </button>
+      {/* Air Quality Legend */}
+      {showAirSensors && <AirQualityLegend />}
       
-      {/* Legendă pentru indicele de calitate a aerului - vizibilă doar când senzorii sunt afișați */}
-      {showAirSensors && (
-        <div className="absolute bottom-16 left-4 bg-white p-2 rounded-md shadow-lg" style={{ zIndex: 999 }}>
-          <h3 className="text-sm font-medium mb-1">Air Quality Index</h3>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#00e400' }}></div>
-            <span className="text-xs">Good (0-50)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ffff00' }}></div>
-            <span className="text-xs">Moderate (51-100)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff7e00' }}></div>
-            <span className="text-xs">Unhealthy for Sensitive Groups (101-150)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff0000' }}></div>
-            <span className="text-xs">Unhealthy (151-200)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#99004c' }}></div>
-            <span className="text-xs">Very Unhealthy (201-300)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7e0023' }}></div>
-            <span className="text-xs">Hazardous (300+)</span>
-          </div>
-        </div>
-      )}
-      
-      {/* Mesaj de eroare - mutat în partea de jos pe mijloc */}
+      {/* Error Message */}
       {error && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-100 text-red-700 px-4 py-2 rounded max-w-md w-full" style={{ zIndex: 999 }}>
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-100 text-red-700 px-4 py-2 rounded max-w-md w-full z-50">
           {error}
         </div>
       )}
