@@ -17,45 +17,45 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = browser
 build_property.RootNamespace = CleanRoute.Client
 build_property.RootNamespace = CleanRoute.Client
-build_property.ProjectDir = /Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/
+build_property.ProjectDir = /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = false
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client
+build_property.MSBuildProjectDirectory = /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Counter.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Home.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Home.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Pages/NotFound.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTm90Rm91bmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Weather.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Weather.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvV2VhdGhlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Routes.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Um91dGVzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/_Imports.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Layout/MainLayout.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L01haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-tq6baaj53o
 
-[/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/Layout/NavMenu.razor]
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L05hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-es6yh2x0tf

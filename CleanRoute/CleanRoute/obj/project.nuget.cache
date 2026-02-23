@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "26PyCycOB5A=",
+  "dgSpecHash": "ovWw0e4GagU=",
   "success": true,
-  "projectFilePath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
+  "projectFilePath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
   "expectedPackageFiles": [
     "/Users/mateibotezat/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/mateibotezat/.nuget/packages/microsoft.aspnetcore.app.internal.assets/10.0.3/microsoft.aspnetcore.app.internal.assets.10.0.3.nupkg.sha512",

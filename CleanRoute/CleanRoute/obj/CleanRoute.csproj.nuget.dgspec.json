@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj": {}
+    "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj": {}
   },
   "projects": {
-    "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj": {
+    "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj",
+        "projectUniqueName": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj",
         "projectName": "CleanRoute.Client",
-        "projectPath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj",
+        "projectPath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj",
         "packagesPath": "/Users/mateibotezat/.nuget/packages/",
-        "outputPath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/obj/",
+        "outputPath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/mateibotezat/.nuget/NuGet/NuGet.Config"
@@ -377,14 +377,14 @@
         }
       }
     },
-    "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj": {
+    "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
+        "projectUniqueName": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
         "projectName": "CleanRoute",
-        "projectPath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
+        "projectPath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/CleanRoute.csproj",
         "packagesPath": "/Users/mateibotezat/.nuget/packages/",
-        "outputPath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute/obj/",
+        "outputPath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/mateibotezat/.nuget/NuGet/NuGet.Config"
@@ -399,8 +399,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj": {
-                "projectPath": "/Users/mateibotezat/Documents/GitHub/UBB-FMI/Anul II/Semestrul II/Ingineria sistemelor soft/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj"
+              "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj": {
+                "projectPath": "/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/CleanRoute.Client.csproj"
               }
             }
           }
