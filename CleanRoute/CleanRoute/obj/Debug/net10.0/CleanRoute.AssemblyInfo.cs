@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("0a5d0720-fb4b-40d5-b139-78cf9503fb78")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("CleanRoute")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8571effe1b18946115d3df0a5f9fc73ecfae8ba4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+21544fef41f4d6113bc13bd6d9a7e4058e5f2dde")]
 [assembly: System.Reflection.AssemblyProductAttribute("CleanRoute")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CleanRoute")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
