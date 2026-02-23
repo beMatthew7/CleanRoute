@@ -1495,11 +1495,7 @@
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/icudt_CJK.tjcz0u77k5.dat.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/icudt_EFIGS.tptq2av103.dat.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/icudt_no_CJK.lfu7j35m59.dat.gz
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.7ajup9mu31.wasm
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.hw58o7jerr.pdb
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.js
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.7ajup9mu31.wasm.gz
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.hw58o7jerr.pdb.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/dotnet.js.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/CleanRoute.Client.staticwebassets.runtime.json
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/CleanRoute.Client.staticwebassets.endpoints.json
@@ -2145,9 +2141,6 @@
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/qty0ldased-{0}-tjcz0u77k5-tjcz0u77k5.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/6bpeqdq7ds-{0}-tptq2av103-tptq2av103.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/hf5xvc8nyz-{0}-lfu7j35m59-lfu7j35m59.gz
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/fn88wd7gan-{0}-7ajup9mu31-7ajup9mu31.gz
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/cz8liavg45-{0}-hw58o7jerr-hw58o7jerr.gz
-/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/1vs8bt0jpn-{0}-p6k4j37ziu-p6k4j37ziu.gz
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/staticwebassets.build.json
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/staticwebassets.build.json.cache
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/staticwebassets.development.json
@@ -2158,3 +2151,10 @@
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/refint/CleanRoute.Client.dll
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/CleanRoute.Client.pdb
 /Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/ref/CleanRoute.Client.dll
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.x0j03i2hu5.wasm
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.fjw7cjkdl8.pdb
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.x0j03i2hu5.wasm.gz
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/bin/Debug/net10.0/wwwroot/_framework/CleanRoute.Client.fjw7cjkdl8.pdb.gz
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/fn88wd7gan-{0}-x0j03i2hu5-x0j03i2hu5.gz
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/cz8liavg45-{0}-fjw7cjkdl8-fjw7cjkdl8.gz
+/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/obj/Debug/net10.0/compressed/1vs8bt0jpn-{0}-lph49fi9gj-lph49fi9gj.gz
