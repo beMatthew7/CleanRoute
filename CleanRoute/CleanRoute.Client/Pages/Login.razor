@@ -1,15 +1,23 @@
 @page "/login"
+@using CleanRoute.Client.Models
 <h3>Login</h3>
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <div class="input-group">
+        <InputText @bind-Value="loginModel.Username" 
+                   class="my-input"
+                   placeholder="Username"></InputText>
+    </div>
+    <div class="input-group">
+        <InputText @bind-Value="loginModel.Password" 
+                   type="password" 
+                   class="my-input"
+                   placeholder="Password">Password</InputText>
+    </div>
+    <button type="submit">Login</button>
 
-<div style="text-align: center; margin-top: 50px">
-    <h1>
-        "Login Page"
-    </h1>
-    <h1>
-        "Login Page"
-    </h1>
-    <p style="@StilMesaj">@MesajTest</p>
-</div>
+</EditForm>
+
+
 
 @code {
 

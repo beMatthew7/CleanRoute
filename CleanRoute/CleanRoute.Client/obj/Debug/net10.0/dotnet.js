@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "CleanRoute.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-rjzlxR6TYMH5FkJcGD4IUDY+b9Pe1UHrra9oYvoZbiA=",
+    "hash": "sha256-4188IyCe4hg+h2pUBPBzgqvBYcpHyqa1pmT0tVPV2wM=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.69poregybn.js"
@@ -1242,16 +1242,16 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "CleanRoute.Client.wasm",
-        "name": "CleanRoute.Client.6b1p8fm65e.wasm",
-        "integrity": "sha256-4lYsLNJM9qopggNCU0nfpWql90X+1rlyRoxbzuxbozs=",
+        "name": "CleanRoute.Client.dms1qx9ysz.wasm",
+        "integrity": "sha256-JdWeMqhaCAZ+ZcZUsEh9kaguKapmFP3bEQ463WchwiM=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "CleanRoute.Client.pdb",
-        "name": "CleanRoute.Client.o43buam25i.pdb",
-        "integrity": "sha256-aPV3YWOOiG3ekiVEBWVytZOaxQoT5oOJSwhcCpQfMtg=",
+        "name": "CleanRoute.Client.rk6koe2ekq.pdb",
+        "integrity": "sha256-tfFDO0MDQJWjDQ49bpZ4mnUfAE5a0ZalB4I4Z7TN7rI=",
         "cache": "force-cache"
       }
     ],

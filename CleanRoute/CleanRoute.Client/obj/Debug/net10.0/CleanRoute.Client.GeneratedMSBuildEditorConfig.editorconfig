@@ -36,10 +36,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTG9naW4ucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTm90Rm91bmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -63,3 +59,7 @@ build_metadata.AdditionalFiles.CssScope = b-tq6baaj53o
 [/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L05hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-es6yh2x0tf
+
+[/Users/mateibotezat/Documents/GitHub/CleanRoute/CleanRoute/CleanRoute.Client/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-q74iqgnmhs
