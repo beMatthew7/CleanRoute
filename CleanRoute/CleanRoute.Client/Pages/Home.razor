@@ -1,7 +1,213 @@
-﻿@page "/"
+@page "/"
+@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<style>
+    :global(article.content) {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+    
+    :global(main) {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+    
+    #map { 
+        flex: 1;
+        min-height: calc(100vh - 3.5rem);
+        width: 100%;
+    }
+    
+    /* Desktop: fixed panel on the right */
+    .map-controls {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        min-width: 300px;
+        max-width: 400px;
+    }
 
-Welcome to your new app.
+    .map-controls-toggle {
+        display: none;
+    }
+    
+    .map-controls h4 {
+        margin: 0 0 10px 0;
+    }
+    
+    .map-controls p {
+        margin: 0 0 15px 0;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    #selected-points {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    #selected-points h5 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+    }
+    
+    #selected-points p {
+        margin: 5px 0;
+        font-size: 12px;
+    }
+    
+    #calculate-button {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+
+    /* Mobile: bottom sheet */
+    @@media (max-width: 768px) {
+        .map-controls {
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            min-width: unset;
+            max-width: unset;
+            width: 100%;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            padding: 10px 15px 20px 15px;
+            max-height: 70vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .map-controls.collapsed .map-controls-body {
+            display: none;
+        }
+
+        .map-controls-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 6px 0 8px 0;
+        }
+
+        .map-controls-toggle .handle {
+            width: 40px;
+            height: 4px;
+            background: #ccc;
+            border-radius: 2px;
+        }
+
+        .map-controls h4 {
+            font-size: 15px;
+            margin: 0 0 6px 0;
+            text-align: center;
+        }
+
+        .map-controls p {
+            font-size: 11px;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+    }
+</style>
+
+<div id="map"></div>
+
+<div class="map-controls" id="map-controls-panel">
+    <div class="map-controls-toggle" onclick="toggleControlsPanel()">
+        <div class="handle"></div>
+    </div>
+    <h4>CleanRoute</h4>
+    <div class="map-controls-body">
+        <p>Click on the map to select the start point. (Optional: click again for an A-B route)</p>
+        <div id="distance-container" style="display: none; margin-bottom: 10px;">
+            <label for="loop-distance" style="font-size: 12px; color: #666;">Loop distance (km):</label>
+            <input type="number" id="loop-distance" value="5" min="1" max="50" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;" />
+        </div>
+        <div id="transport-mode-container" style="margin-bottom: 10px;">
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Transport mode:</label>
+            <div style="display: flex; gap: 6px;">
+                <button id="mode-walk" class="btn btn-primary" onclick="setTransportMode('foot-walking')" style="flex: 1; font-size: 13px;">Walking</button>
+                <button id="mode-bike" class="btn btn-secondary" onclick="setTransportMode('cycling-regular')" style="flex: 1; font-size: 13px;">Bicycle</button>
+            </div>
+        </div>
+        <div id="calculate-button"></div>
+        <div style="margin-top: 10px;">
+            <button id="toggle-aqi-button" class="btn btn-secondary" onclick="toggleAirQuality()" style="width: 100%; background-color: #17a2b8;">Hide Air Quality</button>
+        </div>
+        
+        <div id="route-info-panel" style="display:none; margin-top:15px; border-top: 1px solid #ddd; padding-top:10px;">
+            <h5>Choose Route</h5>
+            <input type="range" id="route-slider" min="0" max="0" value="0" style="width:100%" onchange="changeRoute(this.value)" oninput="changeRoute(this.value)">
+            <div id="route-details" style="margin-top:10px; font-size:14px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+            </div>
+            <button onclick="saveCurrentRoute()" class="btn btn-primary" style="width: 100%; margin-top: 10px; background-color: #28a745;">Save Route</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleControlsPanel() {
+        var panel = document.getElementById('map-controls-panel');
+        if (panel) {
+            panel.classList.toggle('collapsed');
+        }
+    }
+</script>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize the map centered on Cluj
+            await JS.InvokeVoidAsync("initializeMap");
+        }
+    }
+}

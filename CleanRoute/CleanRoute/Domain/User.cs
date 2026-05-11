@@ -1,6 +1,6 @@
 namespace CleanRoute.Domain;
 
-public class User : Entity<int>
+public class User : Entity<long>
 {
     public string Username { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;

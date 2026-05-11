@@ -1,24 +1,244 @@
 @page "/login"
-@using CleanRoute.Client.Models
-<h3>Login</h3>
-<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-    <div class="input-group">
-        <InputText @bind-Value="loginModel.Username" 
-                   class="my-input"
-                   placeholder="Username"></InputText>
+@inject IJSRuntime JS
+
+<PageTitle>Login - CleanRoute</PageTitle>
+
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 60px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .auth-container h2 {
+        text-align: center;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .auth-container p.subtitle {
+        text-align: center;
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .auth-tabs {
+        display: flex;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .auth-tab {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+
+    .auth-btn {
+        width: 100%;
+        padding: 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .auth-btn:hover {
+        background: #0056b3;
+    }
+
+    .auth-btn:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+    }
+
+    .auth-message {
+        text-align: center;
+        margin-top: 16px;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+    .auth-message.success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .auth-message.error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+<div class="auth-container">
+    <h2>CleanRoute</h2>
+    <p class="subtitle">Run cleaner, breathe better</p>
+
+    <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+        <button id="tab-register" class="auth-tab" onclick="showAuthTab('register')">Register</button>
     </div>
-    <div class="input-group">
-        <InputText @bind-Value="loginModel.Password" 
-                   type="password" 
-                   class="my-input"
-                   placeholder="Password">Password</InputText>
+
+    <!-- Login Form -->
+    <div id="login-form">
+        <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Password" />
+        </div>
+        <button class="auth-btn" id="login-btn" onclick="handleLogin()">Login</button>
     </div>
-    <button type="submit">Login</button>
 
-</EditForm>
+    <!-- Register Form -->
+    <div id="register-form" style="display: none;">
+        <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" placeholder="Min 6 characters" />
+        </div>
+        <div class="form-group">
+            <label for="register-password2">Confirm Password</label>
+            <input type="password" id="register-password2" placeholder="Confirm password" />
+        </div>
+        <button class="auth-btn" id="register-btn" onclick="handleRegister()">Create Account</button>
+    </div>
 
+    <div id="auth-message" class="auth-message" style="display: none;"></div>
+</div>
 
+<script>
+    function showAuthTab(tab) {
+        document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('tab-login').className = 'auth-tab' + (tab === 'login' ? ' active' : '');
+        document.getElementById('tab-register').className = 'auth-tab' + (tab === 'register' ? ' active' : '');
+        document.getElementById('auth-message').style.display = 'none';
+    }
+
+    function showMessage(text, type) {
+        var msg = document.getElementById('auth-message');
+        msg.textContent = text;
+        msg.className = 'auth-message ' + type;
+        msg.style.display = 'block';
+    }
+
+    async function handleLogin() {
+        var email = document.getElementById('login-email').value.trim();
+        var password = document.getElementById('login-password').value;
+
+        if (!email || !password) {
+            showMessage('Please fill in all fields.', 'error');
+            return;
+        }
+
+        document.getElementById('login-btn').disabled = true;
+        document.getElementById('login-btn').textContent = 'Logging in...';
+
+        var result = await loginUser(email, password);
+
+        if (result.success) {
+            showMessage('Login successful! Redirecting...', 'success');
+            setTimeout(function() { window.location.href = '/'; }, 500);
+        } else {
+            showMessage(result.message, 'error');
+            document.getElementById('login-btn').disabled = false;
+            document.getElementById('login-btn').textContent = 'Login';
+        }
+    }
+
+    async function handleRegister() {
+        var email = document.getElementById('register-email').value.trim();
+        var password = document.getElementById('register-password').value;
+        var password2 = document.getElementById('register-password2').value;
+
+        if (!email || !password || !password2) {
+            showMessage('Please fill in all fields.', 'error');
+            return;
+        }
+
+        if (password !== password2) {
+            showMessage('Passwords do not match.', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            showMessage('Password must be at least 6 characters.', 'error');
+            return;
+        }
+
+        document.getElementById('register-btn').disabled = true;
+        document.getElementById('register-btn').textContent = 'Creating account...';
+
+        var result = await registerUser(email, password);
+
+        if (result.success) {
+            showMessage(result.message, 'success');
+        } else {
+            showMessage(result.message, 'error');
+        }
+
+        document.getElementById('register-btn').disabled = false;
+        document.getElementById('register-btn').textContent = 'Create Account';
+    }
+</script>
 
 @code {
-
+    // Auth is handled entirely via JS + Supabase SDK
 }
